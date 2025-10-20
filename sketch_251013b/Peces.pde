@@ -1,85 +1,57 @@
 class Pez {
-  int id;             // ID único del pez
+  int id;             
   float x, y;         // posición actual
-  float ySoga;        // altura de la soga (límite superior)
-  float largo = 60;
-  float alto = 30;
+  float ySoga;        // altura de la soga
+  float largo;        // largo del pez
+  float alto;         // alto del pez
   
-  boolean colgado = true; // empieza colgado
-  float vx, vy;           // velocidad cuando nada libre
-  float tOffset;          // desplazamiento de tiempo para movimiento ondulatorio
+  boolean colgado = true;
 
   Pez(int id_, float x_, float y_, float ySoga_) {
     id = id_;
     x = x_;
     y = y_;
     ySoga = ySoga_;
-    tOffset = random(0, TWO_PI); // cada pez distinto
+    
+    // Tamaños relativos al alto de la pantalla
+    largo = height * 0.06;
+    alto = height * 0.03;
   }
 
   void actualizar(Pincel p) {
     if (colgado) {
       float d = dist(x, y, p.x, p.y);
-      if (d < 50) {  
-        colgado = false;
-        vx = random(-1, 1);
-        vy = random(1, 3);
+      if (d < height * 0.04) { // radio de detección proporcional
+        colgado = false; 
+        enviarEstadoAUnity();
       }
-    } else {
-      y += vy;
-      x += sin(frameCount * 0.05 + tOffset) * 2;
-      vy += sin(frameCount * 0.03 + tOffset) * 0.1;
-
-      if (x < 600 + alto/2) x = 600 + alto/2;
-      if (x > 1300 - alto/2) x = 1300 - alto/2;
-
-      if (y < ySoga + 30) {
-        y = ySoga + 30;
-        vy = abs(vy);
-      }
-
-      vx += random(-0.05, 0.05);
-      vy += random(-0.05, 0.05);
-      vx = constrain(vx, -3, 3);
-      vy = constrain(vy, 0.5, 3);
     }
   }
 
   void dibujar() {
-    if (colgado) {
-      stroke(80);
-      line(x, ySoga, x, y - largo/2);
+    // Línea que lo cuelga
+    stroke(80);
+    line(x, ySoga, x, y - largo / 2);
 
-      noStroke();
-      fill(10, 150, 200);
-      ellipse(x, y, alto, largo);
+    // Cuerpo del pez
+    noStroke();
+    fill(10, 150, 200);
+    ellipse(x, y, alto, largo);
 
-      fill(0);
-      triangle(x - alto/2, y - largo/2 - 20,
-               x + alto/2, y - largo/2 - 20,
-               x, y - largo/2);
-    } else {
-      pushMatrix();
-      translate(x, y);
-      float ang = map(sin(frameCount * 0.05 + tOffset), -1, 1, -PI/6, PI/6);
-      rotate(ang);
-      noStroke();
-      fill(10, 150, 200);
-      ellipse(0, 0, largo, alto);
-
-      fill(0);
-      triangle(largo/2, 0, largo/2 + 15, -10, largo/2 + 15, 10);
-      popMatrix();
-    }
+    // Triángulo decorativo
+    fill(0);
+    float triOffset = height * 0.02; // proporcional también
+    triangle(x - alto / 2, y - largo / 2 - triOffset,
+             x + alto / 2, y - largo / 2 - triOffset,
+             x, y - largo / 2);
   }
 
-  // enviar datos a Unity 
-  void enviarAUnity() {
+  void enviarEstadoAUnity() {
     OscMessage msg = new OscMessage("/pez");
     msg.add(id);
     msg.add(x);
     msg.add(y);
-    msg.add(colgado ? 1 : 0); // 1 si colgado, 0 si nadando libre
+    msg.add(colgado ? 1 : 0);
     oscP5.send(msg, unityAddr);
   }
 }
