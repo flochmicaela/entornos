@@ -1,15 +1,17 @@
 class Fruta {
   int id;
   float x, y;
-  float radio = 40;
-  boolean cayendo = false;
-  float vy = 0;
+  float radio;
   int toques = 0;
+  boolean cayendo = false;
 
   Fruta(int id_, float x_, float y_) {
     id = id_;
     x = x_;
     y = y_;
+    
+    // Tamaño relativo al alto de la pantalla
+    radio = height * 0.04; // por ejemplo, 4% del alto
   }
 
   void actualizar(Pincel pincel) {
@@ -17,35 +19,27 @@ class Fruta {
 
     if (!cayendo && d < radio) {
       toques++;
-      if (toques >= 10) {
+      enviarEstadoAUnity();
+
+      if (toques >= 3) {
         cayendo = true;
-      } else {
-        // Temblor aleatorio
-        x += random(-2, 2);
-        y += random(-2, 2);
-      }
-    }
-
-    if (cayendo) {
-      vy += 0.5;  // gravedad
-      y += vy;
-
-      // Rebotar si toca el suelo
-      if (y + radio > height) {
-        y = height - radio;
-        vy *= -0.6;
-
-        // si rebote es muy débil, lo detenemos
-        if (abs(vy) < 1) {
-          vy = 0;
-        }
       }
     }
   }
 
   void dibujar() {
-    fill(255, 100, 0); // naranja / tipo fruta
+    fill(255, 100, 0); // naranja tipo fruta
     stroke(0);
     ellipse(x, y, radio * 2, radio * 2);
+  }
+
+  void enviarEstadoAUnity() {
+    OscMessage msg = new OscMessage("/fruta");
+    msg.add(id);
+    msg.add(x);
+    msg.add(y);
+    msg.add(toques);
+    msg.add(cayendo ? 1 : 0);
+    oscP5.send(msg, unityAddr);
   }
 }
