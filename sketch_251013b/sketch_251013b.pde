@@ -7,20 +7,34 @@ int PUERTO = 12345;
 Receptor receptor;
 Pincel pincel;
 
-// --- Cuadros y objetos ---
-final float FLORES_X = 100;
-final float FLORES_Y = 300;
-final float FLORES_W = 400;
-final float FLORES_H = 700;
+// --- Cuadros y objetos (se calculan dinámicamente) ---
+float FLORES_X, FLORES_Y, FLORES_W, FLORES_H;
+float FRUTAS_X, FRUTAS_Y, FRUTAS_W, FRUTAS_H;
+float PECES_X, PECES_Y, PECES_W, PECES_H;
 
 ArrayList<Fruta> frutas;
 ArrayList<Flor> flores;
-ArrayList<Petalo> petalos;
 ArrayList<Pez> peces;
 
 void setup() {
-  size(1920, 1280);
+  fullScreen(); // Usar pantalla completa
 
+  // --- calcular dimensiones proporcionales ---
+  FLORES_X = width * 0.05;
+  FLORES_Y = height * 0.2;
+  FLORES_W = width * 0.2;
+  FLORES_H = height * 0.6;
+
+  PECES_X = width * 0.3;
+  PECES_Y = height * 0.08;
+  PECES_W = width * 0.4;
+  PECES_H = height * 0.2;
+
+  FRUTAS_X = width * 0.75;
+  FRUTAS_Y = height * 0.2;
+  FRUTAS_W = width * 0.2;
+  FRUTAS_H = height * 0.6;
+  
   // Inicializar OSC
   setupOSC(PUERTO);
   setupUnityOSC(); 
@@ -29,23 +43,38 @@ void setup() {
 
   frutas = new ArrayList<Fruta>();
   flores = new ArrayList<Flor>();
-  petalos = new ArrayList<Petalo>();
   peces = new ArrayList<Pez>();
 
-  // Inicializar todos los objetos
+  // Inicializar todos los objetos (se vuelve a llamar en draw por si se ajusta el tamaño)
   initObjetos();
 }
 
 void draw() {
   background(255);
 
+  // --- calcular dimensiones proporcionales ---
+  FLORES_X = width * 0.05;
+  FLORES_Y = height * 0.2;
+  FLORES_W = width * 0.2;
+  FLORES_H = height * 0.6;
+
+  PECES_X = width * 0.3;
+  PECES_Y = height * 0.08;
+  PECES_W = width * 0.4;
+  PECES_H = height * 0.2;
+
+  FRUTAS_X = width * 0.75;
+  FRUTAS_Y = height * 0.2;
+  FRUTAS_W = width * 0.2;
+  FRUTAS_H = height * 0.6;
+
   // --- dibujar cuadros ---
   noFill();
   stroke(180);
   strokeWeight(3);
   rect(FLORES_X, FLORES_Y, FLORES_W, FLORES_H);
-  rect(600, 100, 700, 250);   // cuadro superior
-  rect(1350, 300, 400, 700);  // cuadro derecho
+  rect(PECES_X, PECES_Y, PECES_W, PECES_H);
+  rect(FRUTAS_X, FRUTAS_Y, FRUTAS_W, FRUTAS_H);
 
   receptor.actualizar();
 
@@ -62,20 +91,13 @@ void draw() {
   for (Flor f : flores) f.actualizar(pincel);
   for (Flor f : flores) f.dibujar();
 
-  // actualizar y dibujar pétalos que caen
-  for (int i = petalos.size()-1; i >= 0; i--) {
-    Petalo p = petalos.get(i);
-    p.actualizar();
-    p.dibujar();
-  }
-
-  // dibujar soga
+  // dibujar soga (usando proporciones)
   noFill();
   stroke(80);
   strokeWeight(3);
   beginShape();
-  for (float x = 600; x <= 1300; x += 20) {
-    float y = 100 + sin(map(x, 600, 1300, 0, PI)) * 20;
+  for (float x = PECES_X; x <= PECES_X + PECES_W; x += 20) {
+    float y = PECES_Y + sin(map(x, PECES_X, PECES_X + PECES_W, 0, PI)) * (height * 0.02);
     vertex(x, y);
   }
   endShape();
@@ -92,30 +114,31 @@ void draw() {
   enviarFrutasAUnity();
 }
 
-// --- Inicialización de objetos usando sus clases ---
+// --- Inicialización de objetos ---
 void initObjetos() {
-  // frutas con ID
-  frutas.add(new Fruta(0, 1450, 550));
-  frutas.add(new Fruta(1, 1600, 450));
-  frutas.add(new Fruta(2, 1500, 350));
+  frutas.clear();
+  frutas.add(new Fruta(0, FRUTAS_X + FRUTAS_W / 2, FRUTAS_Y + FRUTAS_H * 0.7));
+  frutas.add(new Fruta(1, FRUTAS_X + FRUTAS_W / 2, FRUTAS_Y + FRUTAS_H * 0.5));
+  frutas.add(new Fruta(2, FRUTAS_X + FRUTAS_W / 2, FRUTAS_Y + FRUTAS_H * 0.3));
 
-  // flores
+  flores.clear();
   for (int i = 0; i < 4; i++) {
     float fx = FLORES_X + FLORES_W / 2;
-    float fy = FLORES_Y + 150 + i * 150;
-    flores.add(new Flor(i, fx, fy)); // le pasamos el id (i)
+    float spacing = FLORES_H / 5;
+    float fy = FLORES_Y + spacing + i * spacing;
+    flores.add(new Flor(i, fx, fy));
   }
 
+  peces.clear();
+  float margen = width * 0.01;
+  float inicioX = PECES_X + margen;
+  float finX = PECES_X + PECES_W - margen;
+  float baseY = PECES_Y;
 
-  // peces con ID
-  float margen = 30 / 2;
-  float inicioX = 600 + margen;
-  float finX = 1300 - margen;
-  float baseY = 100;
   for (int i = 0; i < 9; i++) {
     float x = map(i, 0, 8, inicioX, finX);
-    float ySoga = baseY + sin(map(i, 0, 8, 0, PI)) * 20;
-    float yPez = ySoga + 80;
+    float ySoga = baseY + sin(map(i, 0, 8, 0, PI)) * (height * 0.02);
+    float yPez = ySoga + height * 0.06;
     peces.add(new Pez(i, x, yPez, ySoga));
   }
 }
