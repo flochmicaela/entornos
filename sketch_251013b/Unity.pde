@@ -9,36 +9,20 @@ void setupUnityOSC() {
   unityAddr = new NetAddress("127.0.0.1", 9000); // puerto de Unity
 }
 
-// Enviar datos de peces
-void enviarPecesAUnity() {
-  for (int i = 0; i < peces.size(); i++) {
-    Pez p = peces.get(i);
-    OscMessage msg = new OscMessage("/pez");
-    msg.add(i);                 // id
-    msg.add(p.x);               // posición x
-    msg.add(p.y);               // posición y
-    msg.add(p.colgado ? 1 : 0); // estado colgado
+// Nueva función en Processing
+void enviarPincelAUnity() {
+  if (pincel != null) {
+
+    float normX = pincel.x / float(width);
+    float normY = pincel.y / float(height);
+
+    // IMPORTANTE: Unity y Processing tienen el eje Y invertido
+    normY = 1.0 - normY;
+
+    OscMessage msg = new OscMessage("/pincel/pos");
+    msg.add(normX);
+    msg.add(normY);
+
     oscP5.send(msg, unityAddr);
   }
-}
-  void enviarFloresAUnity() {
-    for (int i = 0; i < flores.size(); i++) {
-        Flor f = flores.get(i);
-        OscMessage msg = new OscMessage("/flor");
-        msg.add(i);
-        msg.add(f.x);
-        msg.add(f.y);
-        oscP5.send(msg, unityAddr);
-    }
-}
-
-void enviarFrutasAUnity() {
-    for (int i = 0; i < frutas.size(); i++) {
-        Fruta f = frutas.get(i);
-        OscMessage msg = new OscMessage("/fruta");
-        msg.add(i);
-        msg.add(f.x);
-        msg.add(f.y);
-        oscP5.send(msg, unityAddr);
-    }
 }
